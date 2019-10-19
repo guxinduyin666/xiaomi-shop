@@ -2,6 +2,9 @@ module.exports = {
     devServer:{
         port:8888
     },
+    css:{
+        extract:true
+    },
     pwa:{
         favicon32: 'favicon.ico',
         favicon16: 'favicon.ico',
