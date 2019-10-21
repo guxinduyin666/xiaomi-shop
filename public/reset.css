@@ -61,3 +61,10 @@ hr {
 
 /* 让非ie浏览器默认也显示垂直滚动条，防止因滚动条引起的闪烁 */
 /*html { overflow-y: scroll; }*/
+body{
+    font-size: 1.4rem;
+    color: #605f5f;
+    font-family: akkurat,sans-serif;
+    background: #f5f7fc;
+    -webkit-font-smoothing: antialiased;
+}

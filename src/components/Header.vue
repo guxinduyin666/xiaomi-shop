@@ -7,14 +7,31 @@
             <div class="navbar-right-container">
                 <div class="navbar-menu-container">
                     <span class="navbar-link" @click="login">登录</span>
-                    <span class="navbar-link">注册</span>
+                    <span class="navbar-link" @click="register">注册</span>
                     <div class="navbar-cart-container">
                         <i class="icon iconfont icon-gouwuche"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <el-dialog title="登录" :visible.sync="dialogFormVisible" width="400px" :center="true">
+        <el-dialog title="登录" :visible.sync="loginFormVisible" width="400px" :center="true">
+            <el-form :model="loginForm">
+                <el-form-item label="用户名" :label-width="formLabelWidth">
+                    <el-input v-model="loginForm.name" autocomplete="off" prefix-icon="el-icon-user"></el-input>
+                </el-form-item>
+                <el-form-item label="密码" :label-width="formLabelWidth">
+                    <el-input v-model="loginForm.password"
+                              autocomplete="off"
+                              show-password
+                              prefix-icon="el-icon-lock"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="loginFormVisible = false">取 消</el-button>
+                <el-button type="primary" @click="loginFormVisible = false">登 录</el-button>
+            </div>
+        </el-dialog>
+        <el-dialog title="注册" :visible.sync="registerFormVisible" width="400px" :center="true">
             <el-form :model="form">
                 <el-form-item label="用户名" :label-width="formLabelWidth">
                     <el-input v-model="form.name" autocomplete="off" prefix-icon="el-icon-user"></el-input>
@@ -27,8 +44,8 @@
                 </el-form-item>
             </el-form>
             <div slot="footer" class="dialog-footer">
-                <el-button @click="dialogFormVisible = false">取 消</el-button>
-                <el-button type="primary" @click="dialogFormVisible = false">登 录</el-button>
+                <el-button @click="registerFormVisible = false">取 消</el-button>
+                <el-button type="primary" @click="registerFormVisible = false">注 册</el-button>
             </div>
         </el-dialog>
     </div>
@@ -39,8 +56,13 @@
         name: "Header",
         data() {
             return {
-                dialogFormVisible: false,
-                form: {
+                loginFormVisible: false,
+                registerFormVisible:false,
+                loginForm: {
+                    name: '',
+                    password: ''
+                },
+                form:{
                     name: '',
                     password: ''
                 },
@@ -49,7 +71,10 @@
         },
         methods: {
             login() {
-                this.dialogFormVisible = true;
+                this.loginFormVisible = true;
+            },
+            register(){
+                this.registerFormVisible = true;
             }
         }
     }
@@ -127,7 +152,9 @@
     .iconfont {
         font-size: 24px;
     }
-
+    .iconfont:hover{
+        color: #F60;
+    }
     .navbar-link {
         height: 32px;
         line-height: 32px;
