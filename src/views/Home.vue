@@ -20,9 +20,26 @@
                         </el-select>
                     </div>
                     <div class="query-wrap">
-                        <el-button type="primary">查询</el-button>
+                        <el-button type="primary" @click="queryProductByName">查询</el-button>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="product-list-wrap">
+            <div class="container">
+                <ul class="product-list">
+                    <li class="list-item" v-for="product in productList" :key="product.productId">
+                        <Card :productImage="product.productImage" :name="product.productName"
+                              :price="product.salePrice"></Card>
+                    </li>
+                </ul>
+            </div>
+            <div v-infinite-scroll="loadMore"
+                 infinite-scroll-disabled="busy"
+                 infinite-scroll-distance="100"
+                 infinite-scroll-immediate-check="true"
+                 style="text-align: center;">
+                <img src="../assets/imgs/loading.gif" alt="" class="loading" v-show="loading">
             </div>
         </div>
     </div>
@@ -31,19 +48,83 @@
 <script>
     // @ is an alias to /src
     import Breadcrumb from '@/components/Breadcrumb.vue';
+    import Card from '@/components/Card.vue';
+    import product from '@/API/product.js';
 
     export default {
         name: 'home',
         components: {
-            Breadcrumb
+            Breadcrumb,
+            Card
         },
-        data(){
+        data() {
             return {
-                form:{
-                    productName:'',
-                    priceLevel:''
-                }
+                form: {
+                    productName: '',
+                    priceLevel: ''
+                },
+                productList: [],
+                currentPage: 1,
+                busy: false,
+                loading: false
             }
+        },
+        methods: {
+            init() {
+                let req = {
+                    page: 1,
+                    pageSize: 10
+                }
+                this.queryProductList(req);
+            },
+            queryProductList(queryObj, flag = false) {
+                product.findProductList(queryObj).then(res => {
+                    let result;
+                    if (res.state == '0000') {
+                        result = res.result;
+                        result.forEach(product => {
+                            product.productImage = require('../assets/imgs/' + product.productImage);
+                        })
+                        if (flag) {
+                            this.loading = false;
+                            if (result.length < 10) this.busy = true;
+                            result = this.productList.concat(result);
+                        }
+                        this.productList = result;
+                    } else {
+                        this.$message.error(res.msg);
+                    }
+                }).catch(err => {
+                    console.log(err)
+                })
+            },
+            queryProductByName() {
+                let req = {
+                    page: this.currentPage,
+                    pageSize: 10,
+                    productName:this.form.productName,
+                    priceLevel:this.form.priceLevel
+                }
+                this.queryProductList(req);
+            },
+            loadMore() {
+                this.busy = true;
+                this.currentPage++;
+                setTimeout(() => {
+                    let req = {
+                        page: this.currentPage,
+                        pageSize: 10,
+                        productName:this.form.productName,
+                        priceLevel:this.form.priceLevel
+                    }
+                    this.loading = true;
+                    this.queryProductList(req,true);
+                }, 500)
+                this.busy = false;
+            }
+        },
+        mounted() {
+            this.init()
         }
     }
 </script>
@@ -58,17 +139,45 @@
         text-align: right;
         overflow: hidden;
     }
-    .product-name{
+
+    .product-name {
         float: left;
         width: 45%;
     }
-    .query-wrap{
+
+    .query-wrap {
         float: right;
     }
-    .el-input,.el-select{
+
+    .el-input, .el-select {
         width: 80%;
     }
-    label{
+
+    label {
         margin-right: 8px;
+    }
+
+    .product-list {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+    }
+
+    .list-item {
+        width: 19%;
+        margin-top: 1%;
+        margin-right: 1.25%;
+    }
+
+    .list-item:nth-child(5n) {
+        margin-right: 0;
+    }
+
+    .container {
+        overflow-y: hidden;
+    }
+
+    .loading {
+        height: 100px;
     }
 </style>
