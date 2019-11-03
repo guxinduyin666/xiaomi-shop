@@ -21,7 +21,7 @@
                     <li v-for="product in producctList" :key="product.producctId">
                         <div class="cart-tab-1">
                             <div class="cart-item-check">
-                                <el-checkbox v-model="product.checked"></el-checkbox>
+                                <el-checkbox v-model="product.checked" @change="checkProduct"></el-checkbox>
                             </div>
                             <div class="cart-item-pic">
                                 <img :src="product.productImage" alt="" style="width:100%;">
@@ -35,7 +35,7 @@
                         </div>
                         <div class="cart-tab-3">
                             <div class="item-quantity">
-                                <el-input-number v-model="product.num" @change="handleChange" :min="1"
+                                <el-input-number v-model="product.num" @change="handleChange(product)" :min="1"
                                                  :max="10"></el-input-number>
                             </div>
                         </div>
@@ -43,7 +43,7 @@
                             <div class="item-price-total">{{product.totalPrice|currency}}</div>
                         </div>
                         <div class="cart-tab-5">
-                            <div class="cart-item-opration">
+                            <div class="cart-item-opration" @click="showDialog(product)">
                                 <i class="el-icon-delete"></i>
                             </div>
                         </div>
@@ -55,7 +55,7 @@
             <div class="cart-foot-inner clearfix">
                 <div class="cart-foot-l">
                     <div class="item-all-check">
-                        <el-checkbox v-model="checkAll" label="全选"></el-checkbox>
+                        <el-checkbox v-model="checkAll" label="全选" @change="checkList"></el-checkbox>
                     </div>
                 </div>
                 <div class="cart-foot-r">
@@ -63,11 +63,21 @@
                         总价：<span class="total-price">{{totalPrice|currency}}</span>
                     </div>
                     <div class="btn-wrap">
-                        <a href="" class="btn btn--red">去结算</a>
+                        <a href="" class="btn btn--red" @click="goToPay">去结算</a>
                     </div>
                 </div>
             </div>
         </div>
+        <el-dialog :visible.sync="listed" width="400px" :center="true">
+            <div style="text-align: center;">
+                <i class="el-icon-message-solid"></i>&nbsp;
+                <span>你确认要删除此条数据吗?</span>
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="listed = false">关闭</el-button>
+                <el-button type="primary" @click="deleteProduct()">确定</el-button>
+            </div>
+        </el-dialog>
     </div>
 </template>
 <script>
@@ -79,23 +89,37 @@
         data() {
             return {
                 producctList: [],
-                checkAll: false
+                checkAll: false,
+                listed: false,
+                productId: ''
             }
         },
         components: {
             Breadcrumb
         },
         computed: {
+            checkedList() {
+                return this.producctList.filter((item) => {
+                    return item.checked == true;
+                })
+            },
+            unCheckedList() {
+                return this.producctList.filter((item) => {
+                    return item.checked == false;
+                })
+            },
             totalPrice() {
-                return 99;
+                return this.checkedList.reduce((total, item) => {
+                    return total + item.totalPrice
+                }, 0)
             },
             user() {
                 return this.$store.state.user;
             }
         },
         methods: {
-            handleChange() {
-
+            handleChange(product) {
+                product.totalPrice = product.num * product.salePrice;
             },
             init() {
                 let req = {userName: this.user.userName}, result;
@@ -103,8 +127,45 @@
                     if (res.state == '0000') {
                         result = res.data;
                         this.producctList = result;
+                        this.checkProduct();
                     }
                 })
+            },
+            showDialog(product) {
+                this.productId = product.productId;
+                this.listed = true;
+            },
+            deleteProduct() {
+                let index = this.findIndex()
+                this.producctList.splice(index, 1);
+                this.listed = false;
+            },
+            findIndex() {
+                let index = -1;
+                this.producctList.forEach((item, i) => {
+                    if (item.productId == this.productId) {
+                        index = i;
+                    }
+                })
+                return index;
+            },
+            checkList() {
+                this.producctList.forEach((item) => {
+                    if (this.checkAll) {
+                        item.checked = true;
+                    } else {
+                        item.checked = false;
+                    }
+                })
+            },
+            checkProduct() {
+                let flag = this.producctList.every((item) => {
+                    return item.checked == true;
+                })
+                this.checkAll = flag ? true : false;
+            },
+            goToPay() {
+                console.log(this.unCheckedList);
             }
         },
         mounted() {

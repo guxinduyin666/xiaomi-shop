@@ -157,7 +157,8 @@
                 shoppingCartList.forEach((item) => {
                     if (item.productId == product.productId) {
                         exist = true;
-                        product.num++;
+                        item.num++;
+                        product.num = item.num;
                         product.totalPrice = product.salePrice * product.num;
                     }
                 })
@@ -170,12 +171,12 @@
             addShoppingCart(product) {
                 if (this.user.userName) {
                     this.listed = true;
-                    product.checked = false;
+                    product.checked = true;
                     let num = this.productInList(product);
                     if (num == 1) {
                         this.user.shoppingCartList.push(product);
                     }
-                    this.$store.commit('setUser',this.user);
+                    this.$store.commit('setUser', this.user);
                 } else {
                     this.unListed = true;
                 }
@@ -187,7 +188,7 @@
         },
         beforeDestroy() {
             let req = this.user;
-            this.$cookie.set('user',JSON.stringify(this.user),1);
+            this.$cookie.set('user', JSON.stringify(this.user), 1);
             User.updateShoppingCartList(req).then((res) => {
                 console.log(res)
             })
