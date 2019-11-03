@@ -17,6 +17,7 @@
                     <span class="navbar-link" @click="loginOut">退出</span>
                     <div class="navbar-cart-container" @click="goShoppingCart">
                         <i class="icon iconfont icon-gouwuche"></i>
+                        <span v-show="this.num>0" class="listNum">{{this.num}}</span>
                     </div>
                 </div>
             </div>
@@ -78,13 +79,20 @@
                 formLabelWidth: '100px'
             }
         },
-        computed:{
-            user(){
+        computed: {
+            user() {
                 return this.$store.state.user;
+            },
+            num() {
+                let shoppingCartList = this.$store.state.user.shoppingCartList, total = 0;
+                total = Array.isArray(shoppingCartList) ? shoppingCartList.reduce((total, item) => {
+                    return total + item.num;
+                }, 0) : 0;
+                return total;
             }
         },
-        mounted(){
-            let user=JSON.parse(this.$cookie.get('user'))||{};
+        mounted() {
+            let user = JSON.parse(this.$cookie.get('user')) || {};
             this.setUser(user)
         },
         methods: {
@@ -99,14 +107,14 @@
                     password = this.loginForm.password;
                 User.login({userName, password}).then((resp) => {
                     this.loginFormVisible = false;
-                    if(resp.result.length>0){
+                    if (resp.result.length > 0) {
                         this.$message({
                             message: '恭喜你，登录成功！',
                             type: 'success'
                         });
                         this.setUser(resp.result[0]);
-                        this.$cookie.set('user',JSON.stringify(this.user),1);
-                    }else{
+                        this.$cookie.set('user', JSON.stringify(this.user), 1);
+                    } else {
                         this.$message({
                             message: '用户名或密码错误！',
                             type: 'error'
@@ -115,43 +123,46 @@
                 }).catch((err) => {
                     this.loginFormVisible = false;
                     this.$message({
-                        message:err,
-                        type:'error'
+                        message: err,
+                        type: 'error'
                     })
                 })
             },
-            register(){
+            register() {
                 let userName = this.form.name,
-                    password = this.form .password;
-                User.register({userName,password}).then((res)=>{
+                    password = this.form.password;
+                User.register({userName, password}).then((res) => {
                     this.registerFormVisible = false;
-                    if(res.state=='0000'){
+                    if (res.state == '0000') {
                         this.$message({
                             message: '恭喜你，注册成功！',
                             type: 'success'
                         });
-                    }else{
+                    } else {
                         this.$message({
                             message: res.msg,
                             type: 'error'
                         });
                     }
-                }).catch((err)=>{
+                }).catch((err) => {
                     this.registerFormVisible = false;
                     this.$message({
-                        message:err,
-                        type:'error'
+                        message: err,
+                        type: 'error'
                     })
                 })
             },
-            loginOut(){
+            loginOut() {
                 this.setUser({});
-                this.$cookie.set('user',JSON.stringify(this.user),1);
+                if(this.$route.path!='/'){
+                    this.$router.replace('/');
+                }
+                this.$cookie.set('user', JSON.stringify(this.user), 1);
             },
-            setUser(user){
-                this.$store.commit('setUser',user);
+            setUser(user) {
+                this.$store.commit('setUser', user);
             },
-            goShoppingCart(){
+            goShoppingCart() {
                 this.$router.push('/shoppingCart');
             }
         }
@@ -225,8 +236,26 @@
     .navbar-cart-container {
         padding-left: 15px;
         cursor: pointer;
+        position: relative;
     }
-
+    .listNum{
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        position: absolute;
+        top: -9px;
+        right: -11px;
+        width: 20px;
+        border-radius: 10px;
+        color: #fff;
+        background-color: #eb767d;
+        font-size: 16px;
+        font-weight: 700;
+        text-align: center;
+    }
     .iconfont {
         font-size: 24px;
     }

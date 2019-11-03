@@ -120,6 +120,12 @@
         methods: {
             handleChange(product) {
                 product.totalPrice = product.num * product.salePrice;
+                this.updateUser();
+            },
+            updateUser() {
+                this.user.shoppingCartList = this.producctList;
+                this.$store.commit('setUser', this.user);
+                this.$cookie.set('user', JSON.stringify(this.user), 1);
             },
             init() {
                 let req = {userName: this.user.userName}, result;
@@ -139,6 +145,7 @@
                 let index = this.findIndex()
                 this.producctList.splice(index, 1);
                 this.listed = false;
+                this.updateUser();
             },
             findIndex() {
                 let index = -1;
