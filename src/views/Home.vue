@@ -29,8 +29,7 @@
             <div class="container">
                 <ul class="product-list">
                     <li class="list-item" v-for="product in productList" :key="product.productId">
-                        <Card :productImage="product.productImage" :name="product.productName"
-                              :price="product.salePrice"></Card>
+                        <Card :product="product" @addShoppingCart="addShoppingCart(product)"></Card>
                     </li>
                 </ul>
             </div>
@@ -42,6 +41,25 @@
                 <img src="../assets/imgs/loading.gif" alt="" class="loading" v-show="loading">
             </div>
         </div>
+        <el-dialog :visible.sync="listed" width="400px" :center="true">
+            <div style="text-align: center;">
+                <i class="el-icon-success" style="color: #67C23A;"></i>&nbsp;
+                <span>加入购物车成功！</span>
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="listed = false">继续购物</el-button>
+                <el-button type="primary" @click="goToShoppingCart">查看购物车</el-button>
+            </div>
+        </el-dialog>
+        <el-dialog :visible.sync="unListed" width="400px" :center="true">
+            <div style="text-align: center;">
+                <i class="el-icon-error" style="color: #F56C6C;"></i>&nbsp;
+                <span>请先登录,否则无法加入到购物车中！</span>
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="unListed = false">关闭</el-button>
+            </div>
+        </el-dialog>
     </div>
 </template>
 
@@ -50,6 +68,7 @@
     import Breadcrumb from '@/components/Breadcrumb.vue';
     import Card from '@/components/Card.vue';
     import product from '@/API/product.js';
+    import User from '@/API/user.js';
 
     export default {
         name: 'home',
@@ -66,7 +85,14 @@
                 productList: [],
                 currentPage: 1,
                 busy: false,
-                loading: false
+                loading: false,
+                unListed: false,
+                listed: false
+            }
+        },
+        computed: {
+            user() {
+                return this.$store.state.user;
             }
         },
         methods: {
@@ -83,7 +109,8 @@
                     if (res.state == '0000') {
                         result = res.result;
                         result.forEach(product => {
-                            product.productImage = require('../assets/imgs/' + product.productImage);
+                            let baseUrl = 'http://localhost:3000/images/'
+                            product.productImage = baseUrl + product.productImage;
                         })
                         if (flag) {
                             this.loading = false;
@@ -100,10 +127,10 @@
             },
             queryProductByName() {
                 let req = {
-                    page: this.currentPage,
+                    page: 1,
                     pageSize: 10,
-                    productName:this.form.productName,
-                    priceLevel:this.form.priceLevel
+                    productName: this.form.productName,
+                    priceLevel: this.form.priceLevel
                 }
                 this.queryProductList(req);
             },
@@ -114,17 +141,64 @@
                     let req = {
                         page: this.currentPage,
                         pageSize: 10,
-                        productName:this.form.productName,
-                        priceLevel:this.form.priceLevel
+                        productName: this.form.productName,
+                        priceLevel: this.form.priceLevel
                     }
                     this.loading = true;
-                    this.queryProductList(req,true);
+                    this.queryProductList(req, true);
                 }, 500)
                 this.busy = false;
+            },
+            goToShoppingCart() {
+                this.$router.push('/shoppingCart');
+            },
+            productInList(product) {
+                let shoppingCartList = this.user.shoppingCartList, exist = false;
+                shoppingCartList.forEach((item) => {
+                    if (item.productId == product.productId) {
+                        exist = true;
+                        product.num++;
+                        product.totalPrice = product.salePrice * product.num;
+                    }
+                })
+                if (!exist) {
+                    product.num = 1;
+                    product.totalPrice = product.salePrice;
+                }
+                return product.num;
+            },
+            addShoppingCart(product) {
+                if (this.user.userName) {
+                    this.listed = true;
+                    product.checked = false;
+                    let num = this.productInList(product);
+                    if (num == 1) {
+                        this.user.shoppingCartList.push(product);
+                    }
+                    this.$store.commit('setUser',this.user);
+                } else {
+                    this.unListed = true;
+                }
             }
         },
         mounted() {
-            this.init()
+            this.init();
+            console.log(this.user);
+        },
+        beforeDestroy() {
+            let req = this.user;
+            this.$cookie.set('user',JSON.stringify(this.user),1);
+            User.updateShoppingCartList(req).then((res) => {
+                console.log(res)
+            })
+        },
+        beforeRouteLeave(to, from, next) {
+            if (this.user.userName) {
+                next()
+            } else {
+                this.$message.error('请先登录！');
+                next(false);
+            }
         }
     }
 </script>

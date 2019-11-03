@@ -5,10 +5,17 @@
                 <img src="../assets/logo.jpg" alt="logo" class="navbar-brand-logo">
             </div>
             <div class="navbar-right-container">
-                <div class="navbar-menu-container">
-                    <span class="navbar-link" @click="login">登录</span>
-                    <span class="navbar-link" @click="register">注册</span>
-                    <div class="navbar-cart-container">
+                <div class="navbar-menu-container" v-show="!user.userName">
+                    <span class="navbar-link" @click="showLoginForm">登录</span>
+                    <span class="navbar-link" @click="showRegisterForm">注册</span>
+                    <div class="navbar-cart-container" @click="goShoppingCart">
+                        <i class="icon iconfont icon-gouwuche"></i>
+                    </div>
+                </div>
+                <div class="navbar-menu-container" v-show="user.userName">
+                    <span class="navbar-link">{{user.userName}}</span>
+                    <span class="navbar-link" @click="loginOut">退出</span>
+                    <div class="navbar-cart-container" @click="goShoppingCart">
                         <i class="icon iconfont icon-gouwuche"></i>
                     </div>
                 </div>
@@ -28,7 +35,7 @@
             </el-form>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="loginFormVisible = false">取 消</el-button>
-                <el-button type="primary" @click="loginFormVisible = false">登 录</el-button>
+                <el-button type="primary" @click="login">登 录</el-button>
             </div>
         </el-dialog>
         <el-dialog title="注册" :visible.sync="registerFormVisible" width="400px" :center="true">
@@ -45,36 +52,107 @@
             </el-form>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="registerFormVisible = false">取 消</el-button>
-                <el-button type="primary" @click="registerFormVisible = false">注 册</el-button>
+                <el-button type="primary" @click="register">注 册</el-button>
             </div>
         </el-dialog>
     </div>
 </template>
 
 <script>
+    import User from '@/API/user.js';
+
     export default {
         name: "Header",
         data() {
             return {
                 loginFormVisible: false,
-                registerFormVisible:false,
+                registerFormVisible: false,
                 loginForm: {
                     name: '',
                     password: ''
                 },
-                form:{
+                form: {
                     name: '',
                     password: ''
                 },
                 formLabelWidth: '100px'
             }
         },
+        computed:{
+            user(){
+                return this.$store.state.user;
+            }
+        },
+        mounted(){
+            let user=JSON.parse(this.$cookie.get('user'))||{};
+            this.setUser(user)
+        },
         methods: {
-            login() {
+            showLoginForm() {
                 this.loginFormVisible = true;
             },
-            register(){
+            showRegisterForm() {
                 this.registerFormVisible = true;
+            },
+            login() {
+                let userName = this.loginForm.name,
+                    password = this.loginForm.password;
+                User.login({userName, password}).then((resp) => {
+                    this.loginFormVisible = false;
+                    if(resp.result.length>0){
+                        this.$message({
+                            message: '恭喜你，登录成功！',
+                            type: 'success'
+                        });
+                        this.setUser(resp.result[0]);
+                        this.$cookie.set('user',JSON.stringify(this.user),1);
+                    }else{
+                        this.$message({
+                            message: '用户名或密码错误！',
+                            type: 'error'
+                        });
+                    }
+                }).catch((err) => {
+                    this.loginFormVisible = false;
+                    this.$message({
+                        message:err,
+                        type:'error'
+                    })
+                })
+            },
+            register(){
+                let userName = this.form.name,
+                    password = this.form .password;
+                User.register({userName,password}).then((res)=>{
+                    this.registerFormVisible = false;
+                    if(res.state=='0000'){
+                        this.$message({
+                            message: '恭喜你，注册成功！',
+                            type: 'success'
+                        });
+                    }else{
+                        this.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    }
+                }).catch((err)=>{
+                    this.registerFormVisible = false;
+                    this.$message({
+                        message:err,
+                        type:'error'
+                    })
+                })
+            },
+            loginOut(){
+                this.setUser({});
+                this.$cookie.set('user',JSON.stringify(this.user),1);
+            },
+            setUser(user){
+                this.$store.commit('setUser',user);
+            },
+            goShoppingCart(){
+                this.$router.push('/shoppingCart');
             }
         }
     }
@@ -152,9 +230,11 @@
     .iconfont {
         font-size: 24px;
     }
-    .iconfont:hover{
+
+    .iconfont:hover {
         color: #F60;
     }
+
     .navbar-link {
         height: 32px;
         line-height: 32px;

@@ -1,27 +1,42 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
+// import store from '../store/store';
 
 Vue.use(VueRouter)
 
 const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: Home
-  },
-  {
-    path: '/about',
-    name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
-  }
+    {
+        path: '/',
+        name: 'home',
+        component: Home
+    },
+    {
+        path: '/shoppingCart',
+        name: 'shoppingCart',
+        component: () => import(/* webpackChunkName: "shoppingCart" */ '../views/ShoppingCart.vue')
+    },
+    {
+        path: '*',
+        redirect: {name: 'home'}
+    }
 ]
 
 const router = new VueRouter({
-  routes
+    mode: 'history',
+    routes
 })
-
+router.beforeEach((to, from, next) => {
+    if (to.path != '/') {
+        const user = JSON.parse(Vue.prototype.$cookie.get('user'))||{};
+        if (!user.userName) {
+            Vue.prototype.$message('您没有访问当前页面的权限,请先登录!');
+            next('/')
+        } else {
+            next()
+        }
+    } else {
+        next()
+    }
+})
 export default router

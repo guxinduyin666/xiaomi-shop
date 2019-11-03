@@ -9,7 +9,7 @@ axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded
 
 //添加一个请求拦截器
 axios.interceptors.request.use(function (config) {
-  console.dir(config);
+  // console.dir(config);
   return config;
 }, function (error) {
   // Do something with request error
