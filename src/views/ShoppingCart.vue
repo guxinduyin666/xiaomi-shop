@@ -172,7 +172,7 @@
                 this.checkAll = flag ? true : false;
             },
             goToPay() {
-                console.log(this.unCheckedList);
+                this.$router.push('/address');
             }
         },
         mounted() {
